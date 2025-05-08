@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -35,19 +36,12 @@
     --radius: 0.5rem;
 
     --sidebar-background: 0 0% 98%;
-
     --sidebar-foreground: 240 5.3% 26.1%;
-
     --sidebar-primary: 240 5.9% 10%;
-
     --sidebar-primary-foreground: 0 0% 98%;
-
     --sidebar-accent: 240 4.8% 95.9%;
-
     --sidebar-accent-foreground: 240 5.9% 10%;
-
     --sidebar-border: 220 13% 91%;
-
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
 
@@ -98,4 +92,29 @@
   body {
     @apply bg-background text-foreground;
   }
+}
+
+.premier-gradient {
+  background: linear-gradient(to right, #3d195b, #6a29a2);
+}
+
+.laliga-gradient {
+  background: linear-gradient(to right, #14274e, #394867);
+}
+
+.champions-gradient {
+  background: linear-gradient(to right, #081f5c, #0e2e8a);
+}
+
+.stat-card {
+  @apply rounded-lg shadow-md p-4 hover:shadow-lg transition-all duration-300;
+}
+
+.animated-entrance {
+  opacity: 0;
+  animation: fade-in 0.6s forwards, slide-in 0.6s forwards;
+}
+
+.delayed-animation {
+  animation-delay: 0.2s;
 }
