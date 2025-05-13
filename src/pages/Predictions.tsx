@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Navbar } from '@/components/Navbar';
 import { ChartContainer } from '@/components/ChartContainer';
 import { Button } from '@/components/ui/button';
@@ -7,7 +7,6 @@ import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -15,7 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/use-toast";
-import { ChevronRight, TrendingUp, Search } from 'lucide-react';
+import { ChevronRight, TrendingUp, Search, Trash2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 
 type MatchPrediction = {
@@ -64,6 +63,31 @@ const defaultPredictions: MatchPrediction[] = [
   },
 ];
 
+type TeamData = {
+  [key: string]: string[];
+};
+
+const leagueTeams: TeamData = {
+  "Premier League": [
+    "Arsenal", "Aston Villa", "Bournemouth", "Brentford", "Brighton", "Burnley",
+    "Chelsea", "Crystal Palace", "Everton", "Fulham", "Liverpool", "Luton Town",
+    "Manchester City", "Manchester United", "Newcastle United", "Nottingham Forest",
+    "Sheffield United", "Tottenham Hotspur", "West Ham United", "Wolverhampton Wanderers"
+  ],
+  "La Liga": [
+    "Alaves", "Almeria", "Athletic Bilbao", "Atletico Madrid", "Barcelona", "Cadiz",
+    "Celta Vigo", "Getafe", "Girona", "Granada", "Las Palmas", "Mallorca",
+    "Osasuna", "Rayo Vallecano", "Real Betis", "Real Madrid", "Real Sociedad",
+    "Sevilla", "Valencia", "Villarreal"
+  ],
+  "Champions League": [
+    "Arsenal", "Atletico Madrid", "Barcelona", "Bayern Munich", "Benfica",
+    "Borussia Dortmund", "Inter Milan", "Lazio", "Manchester City", "Napoli",
+    "Paris Saint-Germain", "Porto", "PSV Eindhoven", "Real Madrid", "Real Sociedad",
+    "RB Leipzig"
+  ]
+};
+
 export default function Predictions() {
   const [formData, setFormData] = useState<FormData>({
     homeTeam: "",
@@ -71,10 +95,25 @@ export default function Predictions() {
     league: "Premier League",
   });
   const [searchQuery, setSearchQuery] = useState("");
-  const [predictions, setPredictions] = useState<MatchPrediction[]>(defaultPredictions);
+  const [predictions, setPredictions] = useState<MatchPrediction[]>(() => {
+    const savedPredictions = localStorage.getItem('predictions');
+    return savedPredictions ? JSON.parse(savedPredictions) : defaultPredictions;
+  });
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
-  const { isAuthenticated } = useAuth();
+
+  // Save predictions to localStorage whenever they change
+  useEffect(() => {
+    localStorage.setItem('predictions', JSON.stringify(predictions));
+  }, [predictions]);
+
+  const handleDelete = (id: string) => {
+    setPredictions(prev => prev.filter(prediction => prediction.id !== id));
+    toast({
+      title: "Prediction deleted",
+      description: "The match prediction has been removed",
+    });
+  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -83,15 +122,6 @@ export default function Predictions() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!isAuthenticated) {
-      toast({
-        title: "Authentication required",
-        description: "Please sign in to create match predictions",
-        variant: "destructive",
-      });
-      return;
-    }
     
     if (!formData.homeTeam || !formData.awayTeam) {
       toast({
@@ -194,24 +224,34 @@ export default function Predictions() {
                   
                   <div className="space-y-2">
                     <Label htmlFor="homeTeam">Home Team</Label>
-                    <Input
+                    <select
                       id="homeTeam"
                       name="homeTeam"
-                      placeholder="Enter home team"
                       value={formData.homeTeam}
-                      onChange={handleInputChange}
-                    />
+                      onChange={(e) => setFormData(prev => ({ ...prev, homeTeam: e.target.value }))}
+                      className="w-full rounded-md border border-input bg-background px-3 py-2"
+                    >
+                      <option value="">Select home team</option>
+                      {leagueTeams[formData.league].map((team) => (
+                        <option key={team} value={team}>{team}</option>
+                      ))}
+                    </select>
                   </div>
                   
                   <div className="space-y-2">
                     <Label htmlFor="awayTeam">Away Team</Label>
-                    <Input
+                    <select
                       id="awayTeam"
                       name="awayTeam"
-                      placeholder="Enter away team"
                       value={formData.awayTeam}
-                      onChange={handleInputChange}
-                    />
+                      onChange={(e) => setFormData(prev => ({ ...prev, awayTeam: e.target.value }))}
+                      className="w-full rounded-md border border-input bg-background px-3 py-2"
+                    >
+                      <option value="">Select away team</option>
+                      {leagueTeams[formData.league].map((team) => (
+                        <option key={team} value={team}>{team}</option>
+                      ))}
+                    </select>
                   </div>
                   
                   <Button 
@@ -223,13 +263,6 @@ export default function Predictions() {
                   </Button>
                 </form>
               </CardContent>
-              {!isAuthenticated && (
-                <CardFooter className="bg-yellow-50 dark:bg-yellow-900/20 border-t rounded-b-lg">
-                  <p className="text-sm text-yellow-600 dark:text-yellow-400">
-                    Sign in to create and save your predictions
-                  </p>
-                </CardFooter>
-              )}
             </Card>
           </div>
           
@@ -274,12 +307,20 @@ export default function Predictions() {
                                 {prediction.league} • {prediction.date}
                               </div>
                             </div>
-                            <div>
+                            <div className="flex items-center gap-2">
                               <span 
                                 className={`px-2 py-1 rounded-full text-xs font-medium ${getConfidenceColor(prediction.confidence)}`}
                               >
                                 {prediction.prediction} ({prediction.confidence}%)
                               </span>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleDelete(prediction.id)}
+                                className="h-8 w-8 text-gray-500 hover:text-red-600"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
                             </div>
                           </div>
                         </div>
@@ -309,12 +350,20 @@ export default function Predictions() {
                                   {prediction.league} • {prediction.date}
                                 </div>
                               </div>
-                              <div>
+                              <div className="flex items-center gap-2">
                                 <span 
                                   className={`px-2 py-1 rounded-full text-xs font-medium ${getConfidenceColor(prediction.confidence)}`}
                                 >
                                   {prediction.prediction} ({prediction.confidence}%)
                                 </span>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => handleDelete(prediction.id)}
+                                  className="h-8 w-8 text-gray-500 hover:text-red-600"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
                               </div>
                             </div>
                           </div>
@@ -344,12 +393,20 @@ export default function Predictions() {
                                   {prediction.league} • {prediction.date}
                                 </div>
                               </div>
-                              <div>
+                              <div className="flex items-center gap-2">
                                 <span 
                                   className={`px-2 py-1 rounded-full text-xs font-medium ${getConfidenceColor(prediction.confidence)}`}
                                 >
                                   {prediction.prediction} ({prediction.confidence}%)
                                 </span>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => handleDelete(prediction.id)}
+                                  className="h-8 w-8 text-gray-500 hover:text-red-600"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
                               </div>
                             </div>
                           </div>
