@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { ChevronDown, Menu, X, LogIn, LogOut, User } from 'lucide-react';
+import { ChevronDown, Menu, X, LogIn, LogOut, User, UserPlus, Users } from 'lucide-react';
 import { AuthModal } from '@/components/AuthModal';
 import { useAuth } from '@/contexts/AuthContext';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -17,6 +17,7 @@ import {
 export function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [mode, setMode] = useState<'signin' | 'signup'>('signin');
   const location = useLocation();
   const { user, isAuthenticated, signOut } = useAuth();
   const isMobile = useIsMobile();
@@ -73,25 +74,62 @@ export function Navbar() {
               
               <div className="ml-4 flex items-center">
                 {isAuthenticated ? (
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="sm" className="flex items-center">
-                        <User className="h-4 w-4 mr-2" />
-                        <span className="max-w-[100px] truncate">{user?.name}</span>
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={signOut}>
-                        <LogOut className="h-4 w-4 mr-2" />
-                        Sign Out
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                  <div className="flex items-center space-x-2">
+                    <Button 
+                       onClick={() => {
+                         setAuthModalOpen(true);
+                         setMode('signup');
+                       }} 
+                       size="sm" 
+                       variant="ghost" 
+                       className="flex items-center"
+                     >
+                       <UserPlus className="h-4 w-4 mr-2" />
+                       Add Account
+                     </Button>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="sm" className="flex items-center">
+                          <User className="h-4 w-4 mr-2" />
+                          <span className="max-w-[100px] truncate">{user?.name}</span>
+                          <ChevronDown className="h-4 w-4 ml-1" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-56">
+                        <DropdownMenuItem onClick={signOut}>
+                          <LogOut className="h-4 w-4 mr-2" />
+                          Sign Out
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
                 ) : (
-                  <Button onClick={openAuthModal} size="sm" variant="outline" className="flex items-center">
-                    <LogIn className="h-4 w-4 mr-2" />
-                    Sign In
-                  </Button>
+                  <div className="flex items-center space-x-2">
+                    <Button 
+                      onClick={() => {
+                        setAuthModalOpen(true);
+                        setMode('signin');
+                      }} 
+                      size="sm" 
+                      variant="outline" 
+                      className="flex items-center"
+                    >
+                      <LogIn className="h-4 w-4 mr-2" />
+                      Sign In
+                    </Button>
+                    <Button 
+                      onClick={() => {
+                        setAuthModalOpen(true);
+                        setMode('signup');
+                      }} 
+                      size="sm" 
+                      variant="ghost" 
+                      className="flex items-center"
+                    >
+                      <UserPlus className="h-4 w-4 mr-2" />
+                      Sign Up
+                    </Button>
+                  </div>
                 )}
               </div>
             </div>
@@ -178,7 +216,7 @@ export function Navbar() {
         )}
       </nav>
       
-      <AuthModal isOpen={authModalOpen} onClose={closeAuthModal} />
+      <AuthModal isOpen={authModalOpen} onClose={closeAuthModal} initialMode={mode} />
     </>
   );
 }

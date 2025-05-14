@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,16 +12,29 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useToast } from "@/components/ui/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 
 type AuthMode = "signin" | "signup";
 
 interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
+  initialMode: AuthMode;
 }
 
-export function AuthModal({ isOpen, onClose }: AuthModalProps) {
-  const [mode, setMode] = useState<AuthMode>("signin");
+export function AuthModal({ isOpen, onClose, initialMode }: AuthModalProps) {
+  const [mode, setMode] = useState<AuthMode>(initialMode);
+
+  // Reset state when modal opens with new mode
+  useEffect(() => {
+    if (isOpen) {
+      setMode(initialMode);
+      setEmail("");
+      setPassword("");
+      setConfirmPassword("");
+      setName("");
+    }
+  }, [isOpen, initialMode]);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -38,37 +51,40 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
     setName("");
   };
 
+  const { signIn, signUp } = useAuth();
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      if (mode === "signup" && password !== confirmPassword) {
+      if (mode === "signup") {
+        if (password !== confirmPassword) {
+          toast({
+            title: "Passwords don't match",
+            description: "Please make sure your passwords match",
+            variant: "destructive",
+          });
+          return;
+        }
+        await signUp(name, email, password);
         toast({
-          title: "Passwords don't match",
-          description: "Please make sure your passwords match",
-          variant: "destructive",
+          title: "Account created!",
+          description: "Your account has been created successfully",
         });
-        return;
+      } else {
+        await signIn(email, password);
+        toast({
+          title: "Welcome back!",
+          description: "You've successfully signed in",
+        });
       }
-
-      // This is a mock authentication - in a real app, you would connect to an auth service
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 800));
-
-      // Success message
-      toast({
-        title: mode === "signin" ? "Welcome back!" : "Account created!",
-        description: mode === "signin" 
-          ? "You've successfully signed in" 
-          : "Your account has been created successfully",
-      });
       
       onClose();
     } catch (error) {
       toast({
         title: "Authentication error",
-        description: "An error occurred during authentication",
+        description: error instanceof Error ? error.message : "An error occurred during authentication",
         variant: "destructive",
       });
     } finally {
