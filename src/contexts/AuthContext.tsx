@@ -31,31 +31,52 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const signIn = async (email: string, password: string) => {
-    // For demo purposes, we're just setting a mock user
-    // In a real app, you would validate with a backend
-    const mockUser = {
-      id: "user-" + Math.random().toString(36).substr(2, 9),
-      name: email.split("@")[0],
-      email: email,
-    };
-    
-    setUser(mockUser);
-    localStorage.setItem("footystats_user", JSON.stringify(mockUser));
-    return Promise.resolve();
+    try {
+      // Basic validation
+      if (!email || !password) {
+        throw new Error('Email and password are required');
+      }
+
+      // For demo purposes, we're just checking if the password is at least 6 characters
+      if (password.length < 6) {
+        throw new Error('Invalid credentials');
+      }
+
+      const mockUser = {
+        id: "user-" + Math.random().toString(36).substr(2, 9),
+        name: email.split("@")[0],
+        email: email,
+      };
+      
+      setUser(mockUser);
+      localStorage.setItem("footystats_user", JSON.stringify(mockUser));
+    } catch (error) {
+      throw error;
+    }
   };
 
   const signUp = async (name: string, email: string, password: string) => {
-    // For demo purposes, we're just setting a mock user
-    // In a real app, you would register with a backend
-    const mockUser = {
-      id: "user-" + Math.random().toString(36).substr(2, 9),
-      name: name,
-      email: email,
-    };
-    
-    setUser(mockUser);
-    localStorage.setItem("footystats_user", JSON.stringify(mockUser));
-    return Promise.resolve();
+    try {
+      // Basic validation
+      if (!name || !email || !password) {
+        throw new Error('All fields are required');
+      }
+
+      if (password.length < 6) {
+        throw new Error('Password must be at least 6 characters');
+      }
+
+      const mockUser = {
+        id: "user-" + Math.random().toString(36).substr(2, 9),
+        name: name,
+        email: email,
+      };
+      
+      setUser(mockUser);
+      localStorage.setItem("footystats_user", JSON.stringify(mockUser));
+    } catch (error) {
+      throw error;
+    }
   };
 
   const signOut = () => {
